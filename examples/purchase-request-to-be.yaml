@@ -1,0 +1,52 @@
+# Fictional To-Be redesign of the same process: role-based routing, SLAs with escalation,
+# rule-based fulfilment instead of manual checks, ERP documents created by integration.
+code: PR-TOBE
+name: Purchase request (To-Be)
+lanes: [Requester, Line management, System, Warehouse, Procurement, Finance]
+
+steps:
+  - {id: S0, name: Request opened, type: start, lane: Requester, next: S1}
+  - id: S1
+    name: Fill in request form
+    type: task
+    lane: Requester
+    assignee: {type: initiator}
+    sla_hours: 72
+    escalation: true
+    next: A1
+  - id: A1
+    name: Manager approval
+    type: approval
+    lane: Line management
+    assignee: {type: manager_of, value: requester}
+    sla_hours: 16
+    escalation: true
+    next: R1
+  - {id: R1, name: "Fulfilment rules (stock / transfer / purchase)", type: system, lane: System, next: D1}
+  - {id: D1, name: "Fulfil from stock?", type: decision, lane: System, next: [W1, P1]}
+  - id: W1
+    name: Pick and hand over (ERP slip created automatically)
+    type: task
+    lane: Warehouse
+    assignee: {type: role, value: Warehouse clerk}
+    sla_hours: 24
+    escalation: true
+    next: E1
+  - id: P1
+    name: Sourcing and offer evaluation
+    type: task
+    lane: Procurement
+    assignee: {type: role, value: Buyer}
+    sla_hours: 40
+    escalation: true
+    next: F1
+  - id: F1
+    name: Spend approval (threshold-based)
+    type: approval
+    lane: Finance
+    assignee: {type: role, value: Budget owner}
+    sla_hours: 24
+    escalation: true
+    next: I1
+  - {id: I1, name: Purchase order created in ERP, type: system, lane: System, next: E1}
+  - {id: E1, name: Closed, type: end, lane: Requester}

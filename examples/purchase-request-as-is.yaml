@@ -1,0 +1,75 @@
+# Fictional As-Is purchase request process, built to show typical control gaps.
+code: PR-ASIS
+name: Purchase request (As-Is)
+default_sla_hours: 1          # platform default SLA
+lanes: [Requester, Line management, Warehouse, Procurement, Finance]
+
+steps:
+  - {id: S0, name: Request opened, type: start, lane: Requester, next: S1}
+  - id: S1
+    name: Fill in request form
+    type: task
+    lane: Requester
+    assignee: {type: initiator}
+    next: A1
+  - id: A1
+    name: Manager approval
+    type: approval
+    lane: Line management
+    assignee: {type: manager_of, value: requester}
+    next: A2
+  - id: A2
+    name: Technical approval
+    type: approval
+    lane: Line management
+    assignee: {type: role, value: Technical manager}
+    next: A3
+  - id: A3
+    name: Technical approval (second pass)
+    type: approval
+    lane: Line management
+    assignee: {type: role, value: Technical manager}
+    next: W1
+  - id: W1
+    name: Warehouse stock check
+    type: approval
+    lane: Warehouse
+    assignee: {type: person, value: "W-001"}
+    next: D1
+  - {id: D1, name: "In stock?", type: decision, lane: Warehouse, next: [W2, P1]}
+  - id: W2
+    name: Issue from stock and key the slip into the ERP
+    type: task
+    lane: Warehouse
+    assignee: {type: role, value: Warehouse clerk}
+    manual_reentry: true
+    next: E1
+  - id: P1
+    name: Buyer approval
+    type: approval
+    lane: Procurement
+    assignee: {type: role, value: Buyer}
+    sla_hours: 24
+    next: P2
+  - id: P2
+    name: Requester confirms the offer
+    type: approval
+    lane: Requester
+    assignee: {type: initiator}
+    next: F1
+  - id: F1
+    name: Spend approval
+    type: approval
+    lane: Finance
+    assignee: {type: person, value: "F-002"}
+    sla_hours: 48
+    escalation: true
+    next: P3
+  - id: P3
+    name: Create purchase order in ERP by hand
+    type: task
+    lane: Procurement
+    assignee: {type: role, value: Buyer}
+    manual_reentry: true
+  - {id: E1, name: Closed, type: end, lane: Requester}
+  - {id: X1, name: Old cancellation branch, type: task, lane: Procurement, next: E1}
